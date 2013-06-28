@@ -1,5 +1,5 @@
 define([], function() {
-
+	'use strict';
 
 	var Property = function(name, value) {
 		this.name = name;
