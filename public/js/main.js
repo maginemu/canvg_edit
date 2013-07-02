@@ -22,22 +22,34 @@ require(['svg/index'], function(svg) {
 	}
 
 
-	var canvas = document.getElementById('cvs');
-	var ctx = canvas.getContext('2d');
+	var canvas1 = document.getElementById('cvs1');
+	var ctx1 = canvas1.getContext('2d');
+
+	var canvas2 = document.getElementById('cvs2');
+	var ctx2 = canvas2.getContext('2d');
 
 	var docStr = ajax('/images/Opera-Tan-9.svg');
 	var xmlDoc = new DOMParser().parseFromString(docStr, 'text/xml');
 
-	var e = svg.loadOnlyXmlDoc(ctx, xmlDoc);
+	var e = svg.loadOnlyXmlDoc(ctx2, xmlDoc);
 
 	// initial values
-	ctx.strokeStyle = 'rgba(0,0,0,0)';
-	ctx.lineCap = 'butt';
-	ctx.lineJoin = 'miter';
-	ctx.miterLimit = 4;
+	ctx1.strokeStyle = 'rgba(0,0,0,0)';
+	ctx1.lineCap = 'butt';
+	ctx1.lineJoin = 'miter';
+	ctx1.miterLimit = 4;
 
-	e.render(ctx);
+	ctx2.strokeStyle = 'rgba(0,0,0,0)';
+	ctx2.lineCap = 'butt';
+	ctx2.lineJoin = 'miter';
+	ctx2.miterLimit = 4;
 
-	//var part = svg.getElementById('part');
-	//part.render(ctx);
+	e.render(ctx2);
+
+
+	var part = svg.getElementById('path9772');
+	part.setStyle('stroke-width', 15);
+	part.attribute('transform', true).value = 'scale(1.5)';
+	part.render(ctx1);
+
 });
