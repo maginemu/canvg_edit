@@ -46,7 +46,6 @@ require(['svg/index'], function(svg) {
 
 	e.render(ctx2);
 
-
 	var part = svg.getElementById('path9772');
 	part.setStyle('stroke-width', 15);
 	part.attribute('transform', true).value = 'scale(1.5)';
