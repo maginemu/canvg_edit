@@ -9,7 +9,8 @@ define([
 	'svg/element/gradient',
 	'svg/element/filter',
 	'svg/element/text',
-	'svg/element/animate'
+	'svg/element/animate',
+	'svg/element/extended'
 ], function(
 	svg,
 	Property,
@@ -21,7 +22,8 @@ define([
 	gradient,
 	filter,
 	text,
-	animate
+	animate,
+	extended
 ) {
 	'use strict';
 

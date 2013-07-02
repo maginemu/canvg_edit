@@ -28,6 +28,16 @@ require(['svg/index'], function(svg) {
 	var docStr = ajax('/images/Opera-Tan-9.svg');
 	var xmlDoc = new DOMParser().parseFromString(docStr, 'text/xml');
 
-	var e = svg.loadXmlDoc(ctx, xmlDoc);
+	var e = svg.loadOnlyXmlDoc(ctx, xmlDoc);
 
+	// initial values
+	ctx.strokeStyle = 'rgba(0,0,0,0)';
+	ctx.lineCap = 'butt';
+	ctx.lineJoin = 'miter';
+	ctx.miterLimit = 4;
+
+	e.render(ctx);
+
+	//var part = svg.getElementById('part');
+	//part.render(ctx);
 });

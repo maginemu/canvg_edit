@@ -22,86 +22,6 @@ define([
 		this.styles = {};
 		this.children = [];
 
-		// get or create attribute
-		this.attribute = function(name, createIfNotExists) {
-			var a = this.attributes[name];
-			if (a != null) return a;
-
-			if (createIfNotExists == true) { a = new Property(name, ''); this.attributes[name] = a; }
-			return a || svg.EmptyProperty;
-		}
-
-		// get or create style, crawls up node tree
-		this.style = function(name, createIfNotExists) {
-			var s = this.styles[name];
-			if (s != null) return s;
-
-			var a = this.attribute(name);
-			if (a != null && a.hasValue()) {
-				this.styles[name] = a; // move up to me to cache
-				return a;
-			}
-
-			var p = this.parent;
-			if (p != null) {
-				var ps = p.style(name);
-				if (ps != null && ps.hasValue()) {
-					return ps;
-				}
-			}
-
-			if (createIfNotExists == true) { s = new Property(name, ''); this.styles[name] = s; }
-			return s || svg.EmptyProperty;
-		}
-
-		// base render
-		this.render = function(ctx) {
-			// don't render display=none
-			if (this.style('display').value == 'none') return;
-
-			// don't render visibility=hidden
-			if (this.attribute('visibility').value == 'hidden') return;
-
-			ctx.save();
-			this.setContext(ctx);
-			// mask
-			if (this.attribute('mask').hasValue()) {
-				var mask = this.attribute('mask').getDefinition();
-				if (mask != null) mask.apply(ctx, this);
-			}
-			else if (this.style('filter').hasValue()) {
-				var filter = this.style('filter').getDefinition();
-				if (filter != null) filter.apply(ctx, this);
-			}
-			else this.renderChildren(ctx);
-			this.clearContext(ctx);
-			ctx.restore();
-		}
-
-		// base set context
-		this.setContext = function(ctx) {
-			// OVERRIDE ME!
-		}
-
-		// base clear context
-		this.clearContext = function(ctx) {
-			// OVERRIDE ME!
-		}
-
-		// base render children
-		this.renderChildren = function(ctx) {
-			for (var i=0; i<this.children.length; i++) {
-				this.children[i].render(ctx);
-			}
-		}
-
-		this.addChild = function(childNode, create) {
-			var child = childNode;
-			if (create) child = svg.CreateElement(childNode);
-			child.parent = this;
-			this.children.push(child);
-		}
-
 		if (node != null && node.nodeType == 1) { //ELEMENT_NODE
 			// add children
 			for (var i=0; i<node.childNodes.length; i++) {
@@ -172,7 +92,87 @@ define([
 				}
 			}
 		}
+	};
+
+	// get or create attribute
+	ElementBase.prototype.attribute = function(name, createIfNotExists) {
+		var a = this.attributes[name];
+		if (a != null) return a;
+
+		if (createIfNotExists == true) { a = new Property(name, ''); this.attributes[name] = a; }
+		return a || svg.EmptyProperty;
 	}
+
+	// get or create style, crawls up node tree
+	ElementBase.prototype.style = function(name, createIfNotExists) {
+		var s = this.styles[name];
+		if (s != null) return s;
+
+		var a = this.attribute(name);
+		if (a != null && a.hasValue()) {
+			this.styles[name] = a; // move up to me to cache
+			return a;
+		}
+
+		var p = this.parent;
+		if (p != null) {
+			var ps = p.style(name);
+			if (ps != null && ps.hasValue()) {
+				return ps;
+			}
+		}
+
+		if (createIfNotExists == true) { s = new Property(name, ''); this.styles[name] = s; }
+		return s || svg.EmptyProperty;
+	}
+
+	// base render
+	ElementBase.prototype.render = function(ctx) {
+		// don't render display=none
+		if (this.style('display').value == 'none') return;
+
+		// don't render visibility=hidden
+		if (this.attribute('visibility').value == 'hidden') return;
+
+		ctx.save();
+		this.setContext(ctx);
+		// mask
+		if (this.attribute('mask').hasValue()) {
+			var mask = this.attribute('mask').getDefinition();
+			if (mask != null) mask.apply(ctx, this);
+		}
+		else if (this.style('filter').hasValue()) {
+			var filter = this.style('filter').getDefinition();
+			if (filter != null) filter.apply(ctx, this);
+		}
+		else this.renderChildren(ctx);
+		this.clearContext(ctx);
+		ctx.restore();
+	};
+
+	// base set context
+	ElementBase.prototype.setContext = function(ctx) {
+		// OVERRIDE ME!
+	};
+
+	// base clear context
+	ElementBase.prototype.clearContext = function(ctx) {
+		// OVERRIDE ME!
+	};
+
+	// base render children
+	ElementBase.prototype.renderChildren = function(ctx) {
+		for (var i=0; i<this.children.length; i++) {
+			this.children[i].render(ctx);
+		}
+	};
+
+	ElementBase.prototype.addChild = function(childNode, create) {
+		var child = childNode;
+		if (create) child = svg.CreateElement(childNode);
+		child.parent = this;
+		this.children.push(child);
+	};
 
 
 
