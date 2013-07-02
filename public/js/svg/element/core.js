@@ -1,10 +1,10 @@
 define([
-	'core',
-	'property',
-	'font',
-	'transform',
-	'boundingbox',
-	'point'
+	'svg/core',
+	'svg/property',
+	'svg/font',
+	'svg/transform',
+	'svg/boundingbox',
+	'svg/point'
 ], function(
 	svg,
 	Property,
@@ -16,28 +16,6 @@ define([
 	'use strict'
 
 	var Element = {};
-
-	Element.MISSING = function(node) {
-		if (console) console.log('ERROR: Element \'' + node.nodeName + '\' not yet implemented.');
-	}
-	Element.MISSING.prototype = new svg.Element.ElementBase;
-
-	// element factory
-	var CreateElement = function(node) {
-		var className = node.nodeName.replace(/^[^:]+:/,''); // remove namespace
-		className = className.replace(/\-/g,''); // remove dashes
-		var e = null;
-		if (typeof(Element[className]) != 'undefined') {
-			e = new Element[className](node);
-		}
-		else {
-			e = new Element.MISSING(node);
-		}
-
-		e.type = node.nodeName;
-		return e;
-	};
-
 
 	var ElementBase = function(node) {
 		this.attributes = {};
@@ -472,12 +450,34 @@ define([
 	}
 	GradientBase.prototype = new ElementBase;
 
+	var MISSING = function(node) {
+		if (console) console.log('ERROR: Element \'' + node.nodeName + '\' not yet implemented.');
+	}
+	MISSING.prototype = new ElementBase;
+
+	// element factory
+	var CreateElement = function(node) {
+		var className = node.nodeName.replace(/^[^:]+:/,''); // remove namespace
+		className = className.replace(/\-/g,''); // remove dashes
+		var e = null;
+		if (typeof(Element[className]) != 'undefined') {
+			e = new Element[className](node);
+		}
+		else {
+			e = new Element.MISSING(node);
+		}
+
+		e.type = node.nodeName;
+		return e;
+	};
+	svg.CreateElement = CreateElement;
 
 	Element.ElementBase = ElementBase;
 	Element.RenderedElementBase = RenderedElementBase;
 	Element.PathElementBase = PathElementBase;
 	Element.TextElementBase = TextElementBase;
 	Element.GradientBase = GradientBase;
+	Element.MISSING = MISSING;
 
 	return Element;
 });

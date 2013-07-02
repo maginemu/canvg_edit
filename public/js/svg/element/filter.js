@@ -1,5 +1,5 @@
 define([
-	'element/core'
+	'svg/element/core'
 ], function(
 	Element
 ) {

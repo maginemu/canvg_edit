@@ -1,4 +1,4 @@
-define([], function() {
+define(['svg/core'], function(svg) {
 	'use strict';
 
 	var Property = function(name, value) {

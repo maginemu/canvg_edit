@@ -1,8 +1,8 @@
 define([
-	'core',
-	'point',
-	'boundingbox',
-	'element/core'
+	'svg/core',
+	'svg/point',
+	'svg/boundingbox',
+	'svg/element/core'
 ], function(
 	svg,
 	Point,
@@ -97,7 +97,7 @@ define([
 	ellipse.prototype = new PathElementBase;
 
 	// line element
-	line = function(node) {
+	var line = function(node) {
 		this.base = PathElementBase;
 		this.base(node);
 
@@ -128,7 +128,7 @@ define([
 	line.prototype = new PathElementBase;
 
 	// polyline element
-	polyline = function(node) {
+	var polyline = function(node) {
 		this.base = PathElementBase;
 		this.base(node);
 
@@ -158,7 +158,7 @@ define([
 	polyline.prototype = new PathElementBase;
 
 	// polygon element
-	polygon = function(node) {
+	var polygon = function(node) {
 		this.base = polyline;
 		this.base(node);
 

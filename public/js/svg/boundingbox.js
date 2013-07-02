@@ -1,4 +1,4 @@
-def(['svg'], function(svg) {
+define(['svg/core'], function(svg) {
 
 	// bounding box
 	var BoundingBox = function(x1, y1, x2, y2) { // pass in initial points if you want

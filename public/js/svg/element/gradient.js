@@ -1,6 +1,6 @@
 define([
-	'property',
-	'element/core'
+	'svg/property',
+	'svg/element/core'
 ], function(
 	Property,
 	Element

@@ -1,7 +1,7 @@
 define([
-	'core',
-	'property',
-	'element/core'
+	'svg/core',
+	'svg/property',
+	'svg/element/core'
 ], function(
 	svg,
 	Property,

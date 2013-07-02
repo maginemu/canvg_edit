@@ -1,4 +1,4 @@
-define(['core', 'property'], function (svg, Property) {
+define(['svg/core', 'svg/property'], function (svg, Property) {
 	'use strict';
 
 	// aspect ratio

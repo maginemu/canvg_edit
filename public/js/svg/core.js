@@ -58,23 +58,5 @@ define([], function() {
 		return null;
 	}
 
-	// parse xml
-	svg.parseXml = function(xml) {
-		if (window.DOMParser)
-		{
-			var parser = new DOMParser();
-			return parser.parseFromString(xml, 'text/xml');
-		}
-		else
-		{
-			xml = xml.replace(/<!DOCTYPE svg[^>]*>/, '');
-			var xmlDoc = new ActiveXObject('Microsoft.XMLDOM');
-			xmlDoc.async = 'false';
-			xmlDoc.loadXML(xml);
-			return xmlDoc;
-		}
-	}
-
-
 	return svg;
 });

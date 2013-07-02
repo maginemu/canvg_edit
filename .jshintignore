@@ -1,0 +1,4 @@
+jshintignore
+jshintrc
+test
+public/js/lib/*

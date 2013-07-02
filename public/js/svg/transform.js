@@ -1,4 +1,4 @@
-define(['core', 'point'], function(svg, Point) {
+define(['svg/core', 'svg/point'], function(svg, Point) {
 
 	// transforms
 	var Transform = function(v) {
@@ -100,4 +100,5 @@ define(['core', 'point'], function(svg, Point) {
 		}
 	};
 
+	return Transform;
 });

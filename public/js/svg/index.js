@@ -1,13 +1,15 @@
 define([
-	'core',
-	'aspectratio',
-	'boundingbox',
-	'element/index'
-	'font',
-	'point',
-	'property',
-	'transform'
+	'lib/rgbcolor',
+	'svg/core',
+	'svg/aspectratio',
+	'svg/boundingbox',
+	'svg/element/index',
+	'svg/font',
+	'svg/point',
+	'svg/property',
+	'svg/transform'
 ], function(
+	RGBColor,
 	svg,
 	AspectRatio,
 	BoundingBox,
@@ -19,6 +21,24 @@ define([
 ) {
 	'use strict';
 
+	// parse xml
+	var parseXml = function(xml) {
+		if (window.DOMParser)
+		{
+			var parser = new DOMParser();
+			return parser.parseFromString(xml, 'text/xml');
+		}
+		else
+		{
+			xml = xml.replace(/<!DOCTYPE svg[^>]*>/, '');
+			var xmlDoc = new ActiveXObject('Microsoft.XMLDOM');
+			xmlDoc.async = 'false';
+			xmlDoc.loadXML(xml);
+			return xmlDoc;
+		}
+	}
+
+
 	// load from url
 	svg.load = function(ctx, url) {
 		svg.loadXml(ctx, svg.ajax(url));
@@ -26,7 +46,7 @@ define([
 
 	// load from xml
 	svg.loadXml = function(ctx, xml) {
-		svg.loadXmlDoc(ctx, svg.parseXml(xml));
+		svg.loadXmlDoc(ctx, parseXml(xml));
 	}
 
 	svg.loadXmlDoc = function(ctx, dom) {
@@ -104,6 +124,7 @@ define([
 			waitingForImages = false;
 			draw();
 		}
+
 		svg.intervalID = setInterval(function() {
 			var needUpdate = false;
 
@@ -122,6 +143,8 @@ define([
 				draw();
 			}
 		}, 1000 / svg.FRAMERATE);
+
+		return e;
 	}
 
 	svg.stop = function() {

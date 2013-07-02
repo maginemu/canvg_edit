@@ -1,4 +1,4 @@
-define(['core'], funciton(svg) {
+define(['svg/core'], function(svg) {
 	// fonts
 	var Font = new (function() {
 		this.Styles = 'normal|italic|oblique|inherit';

@@ -1,7 +1,7 @@
-define(['core'], function(svg) {
+define(['svg/core'], function(svg) {
 
 
-	var atan2 = Maht.atan2;
+	var atan2 = Math.atan2;
 
 	var Point = function(x, y) {
 		this.x = x;

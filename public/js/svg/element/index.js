@@ -1,19 +1,20 @@
 define([
-	'core',
-	'property',
-	'point',
-	'boundingbox',
-	'aspectratio',
-	'element/core',
-	'element/shape',
-	'element/gradient',
-	'element/filter',
-	'element/text',
-	'element/animate'
-], funciton(
+	'svg/core',
+	'svg/property',
+	'svg/point',
+	'svg/boundingbox',
+	'svg/aspectratio',
+	'svg/element/core',
+	'svg/element/shape',
+	'svg/element/gradient',
+	'svg/element/filter',
+	'svg/element/text',
+	'svg/element/animate'
+], function(
 	svg,
 	Property,
 	Point,
+	BoundingBox,
 	AspectRatio,
 	Element,
 	shape,
@@ -24,9 +25,13 @@ define([
 ) {
 	'use strict';
 
+	var ElementBase = Element.ElementBase;
+	var RenderedElementBase = Element.RenderedElementBase;
+	var PathElementBase = Element.PathElementBase;
+
 	// svg element
 	Element.svg = function(node) {
-		this.base = svg.Element.RenderedElementBase;
+		this.base = RenderedElementBase;
 		this.base(node);
 
 		this.baseClearContext = this.clearContext;
@@ -105,7 +110,7 @@ define([
 
 
 	// path element
-	path = function(node) {
+	var path = function(node) {
 		this.base = PathElementBase;
 		this.base(node);
 
@@ -440,10 +445,10 @@ define([
 			return markers;
 		}
 	}
-	path.prototype = new PathElementBase;
+	path.prototype = new Element.PathElementBase;
 
 	// pattern element
-	pattern = function(node) {
+	var pattern = function(node) {
 		this.base = ElementBase;
 		this.base(node);
 
@@ -468,7 +473,7 @@ define([
 	pattern.prototype = new ElementBase;
 
 	// marker element
-	marker = function(node) {
+	var marker = function(node) {
 		this.base = ElementBase;
 		this.base(node);
 
@@ -480,7 +485,7 @@ define([
 			ctx.save();
 
 			// render me using a temporary svg element
-			var tempSvg = new svg.Element.svg();
+			var tempSvg = new Element.svg();
 			tempSvg.attributes['viewBox'] = new svg.Property('viewBox', this.attribute('viewBox').value);
 			tempSvg.attributes['refX'] = new svg.Property('refX', this.attribute('refX').value);
 			tempSvg.attributes['refY'] = new svg.Property('refY', this.attribute('refY').value);
@@ -512,225 +517,224 @@ define([
 
 
 
-		// font element
-		svg.Element.font = function(node) {
-			this.base = svg.Element.ElementBase;
-			this.base(node);
+	// font element
+	Element.font = function(node) {
+		this.base = ElementBase;
+		this.base(node);
 
-			this.horizAdvX = this.attribute('horiz-adv-x').numValue();
+		this.horizAdvX = this.attribute('horiz-adv-x').numValue();
 
-			this.isRTL = false;
-			this.isArabic = false;
-			this.fontFace = null;
-			this.missingGlyph = null;
-			this.glyphs = [];
-			for (var i=0; i<this.children.length; i++) {
-				var child = this.children[i];
-				if (child.type == 'font-face') {
-					this.fontFace = child;
-					if (child.style('font-family').hasValue()) {
-						svg.Definitions[child.style('font-family').value] = this;
-					}
-				}
-				else if (child.type == 'missing-glyph') this.missingGlyph = child;
-				else if (child.type == 'glyph') {
-					if (child.arabicForm != '') {
-						this.isRTL = true;
-						this.isArabic = true;
-						if (typeof(this.glyphs[child.unicode]) == 'undefined') this.glyphs[child.unicode] = [];
-						this.glyphs[child.unicode][child.arabicForm] = child;
-					}
-					else {
-						this.glyphs[child.unicode] = child;
-					}
+		this.isRTL = false;
+		this.isArabic = false;
+		this.fontFace = null;
+		this.missingGlyph = null;
+		this.glyphs = [];
+		for (var i=0; i<this.children.length; i++) {
+			var child = this.children[i];
+			if (child.type == 'font-face') {
+				this.fontFace = child;
+				if (child.style('font-family').hasValue()) {
+					svg.Definitions[child.style('font-family').value] = this;
 				}
 			}
-		}
-		svg.Element.font.prototype = new svg.Element.ElementBase;
-
-		// font-face element
-		svg.Element.fontface = function(node) {
-			this.base = svg.Element.ElementBase;
-			this.base(node);
-
-			this.ascent = this.attribute('ascent').value;
-			this.descent = this.attribute('descent').value;
-			this.unitsPerEm = this.attribute('units-per-em').numValue();
-		}
-		svg.Element.fontface.prototype = new svg.Element.ElementBase;
-
-		// missing-glyph element
-		svg.Element.missingglyph = function(node) {
-			this.base = svg.Element.path;
-			this.base(node);
-
-			this.horizAdvX = 0;
-		}
-		svg.Element.missingglyph.prototype = new svg.Element.path;
-
-		// glyph element
-		svg.Element.glyph = function(node) {
-			this.base = svg.Element.path;
-			this.base(node);
-
-			this.horizAdvX = this.attribute('horiz-adv-x').numValue();
-			this.unicode = this.attribute('unicode').value;
-			this.arabicForm = this.attribute('arabic-form').value;
-		}
-		svg.Element.glyph.prototype = new svg.Element.path;
-
-
-		// image element
-		svg.Element.image = function(node) {
-			this.base = svg.Element.RenderedElementBase;
-			this.base(node);
-
-			var href = this.attribute('xlink:href').value;
-			var isSvg = href.match(/\.svg$/);
-
-			svg.Images.push(this);
-			this.loaded = false;
-			if (!isSvg) {
-				this.img = document.createElement('img');
-				var self = this;
-				this.img.onload = function() { self.loaded = true; }
-				this.img.onerror = function() { if (console) console.log('ERROR: image "' + href + '" not found'); self.loaded = true; }
-				this.img.src = href;
-			}
-			else {
-				this.img = svg.ajax(href);
-				this.loaded = true;
-			}
-
-
-			this.renderChildren = function(ctx) {
-				var x = this.attribute('x').toPixels('x');
-				var y = this.attribute('y').toPixels('y');
-
-				var width = this.attribute('width').toPixels('x');
-				var height = this.attribute('height').toPixels('y');
-				if (width == 0 || height == 0) return;
-
-				ctx.save();
-				if (isSvg) {
-					ctx.drawSvg(this.img, x, y, width, height);
+			else if (child.type == 'missing-glyph') this.missingGlyph = child;
+			else if (child.type == 'glyph') {
+				if (child.arabicForm != '') {
+					this.isRTL = true;
+					this.isArabic = true;
+					if (typeof(this.glyphs[child.unicode]) == 'undefined') this.glyphs[child.unicode] = [];
+					this.glyphs[child.unicode][child.arabicForm] = child;
 				}
 				else {
-					ctx.translate(x, y);
-					svg.AspectRatio(ctx,
-									this.attribute('preserveAspectRatio').value,
-									width,
-									this.img.width,
-									height,
-									this.img.height,
-									0,
-									0);
-					ctx.drawImage(this.img, 0, 0);
-				}
-				ctx.restore();
-			}
-
-			this.getBoundingBox = function () {
-				var x = this.attribute('x').toPixels('x');
-				var y = this.attribute('y').toPixels('y');
-
-				var width = this.attribute('width').toPixels('x');
-				var height = this.attribute('height').toPixels('y');
-
-				return new svg.BoundingBox(x, y, x + width, y + height);
-			};
-		}
-		svg.Element.image.prototype = new svg.Element.RenderedElementBase;
-
-		// group element
-		svg.Element.g = function(node) {
-			this.base = svg.Element.RenderedElementBase;
-			this.base(node);
-
-			this.getBoundingBox = function() {
-				var bb = new svg.BoundingBox();
-				for (var i=0; i<this.children.length; i++) {
-					bb.addBoundingBox(this.children[i].getBoundingBox());
-				}
-				return bb;
-			};
-		}
-		svg.Element.g.prototype = new svg.Element.RenderedElementBase;
-
-		// symbol element
-		svg.Element.symbol = function(node) {
-			this.base = svg.Element.RenderedElementBase;
-			this.base(node);
-
-			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {
-				this.baseSetContext(ctx);
-
-				// viewbox
-				if (this.attribute('viewBox').hasValue()) {
-					var viewBox = svg.ToNumberArray(this.attribute('viewBox').value);
-					var minX = viewBox[0];
-					var minY = viewBox[1];
-					width = viewBox[2];
-					height = viewBox[3];
-
-					svg.AspectRatio(ctx,
-									this.attribute('preserveAspectRatio').value,
-									this.attribute('width').toPixels('x'),
-									width,
-									this.attribute('height').toPixels('y'),
-									height,
-									minX,
-									minY);
-
-					svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);
+					this.glyphs[child.unicode] = child;
 				}
 			}
 		}
-		svg.Element.symbol.prototype = new svg.Element.RenderedElementBase;
+	}
+	Element.font.prototype = new ElementBase;
 
-		// style element
-		svg.Element.style = function(node) {
-			this.base = svg.Element.ElementBase;
-			this.base(node);
+	// font-face element
+	Element.fontface = function(node) {
+		this.base = ElementBase;
+		this.base(node);
 
-			// text, or spaces then CDATA
-			var css = node.childNodes[0].nodeValue + (node.childNodes.length > 1 ? node.childNodes[1].nodeValue : '');
-			css = css.replace(/(\/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)|(^[\s]*\/\/.*)/gm, ''); // remove comments
-			css = svg.compressSpaces(css); // replace whitespace
-			var cssDefs = css.split('}');
-			for (var i=0; i<cssDefs.length; i++) {
-				if (svg.trim(cssDefs[i]) != '') {
-					var cssDef = cssDefs[i].split('{');
-					var cssClasses = cssDef[0].split(',');
-					var cssProps = cssDef[1].split(';');
-					for (var j=0; j<cssClasses.length; j++) {
-						var cssClass = svg.trim(cssClasses[j]);
-						if (cssClass != '') {
-							var props = {};
-							for (var k=0; k<cssProps.length; k++) {
-								var prop = cssProps[k].indexOf(':');
-								var name = cssProps[k].substr(0, prop);
-								var value = cssProps[k].substr(prop + 1, cssProps[k].length - prop);
-								if (name != null && value != null) {
-									props[svg.trim(name)] = new svg.Property(svg.trim(name), svg.trim(value));
-								}
+		this.ascent = this.attribute('ascent').value;
+		this.descent = this.attribute('descent').value;
+		this.unitsPerEm = this.attribute('units-per-em').numValue();
+	}
+	Element.fontface.prototype = new ElementBase;
+
+	// missing-glyph element
+	Element.missingglyph = function(node) {
+		this.base = path;
+		this.base(node);
+
+		this.horizAdvX = 0;
+	}
+	Element.missingglyph.prototype = new path;
+
+	// glyph element
+	Element.glyph = function(node) {
+		this.base = path;
+		this.base(node);
+
+		this.horizAdvX = this.attribute('horiz-adv-x').numValue();
+		this.unicode = this.attribute('unicode').value;
+		this.arabicForm = this.attribute('arabic-form').value;
+	}
+	Element.glyph.prototype = new path;
+
+
+	// image element
+	Element.image = function(node) {
+		this.base = RenderedElementBase;
+		this.base(node);
+
+		var href = this.attribute('xlink:href').value;
+		var isSvg = href.match(/\.svg$/);
+
+		svg.Images.push(this);
+		this.loaded = false;
+		if (!isSvg) {
+			this.img = document.createElement('img');
+			var self = this;
+			this.img.onload = function() { self.loaded = true; }
+			this.img.onerror = function() { if (console) console.log('ERROR: image "' + href + '" not found'); self.loaded = true; }
+			this.img.src = href;
+		}
+		else {
+			this.img = svg.ajax(href);
+			this.loaded = true;
+		}
+
+
+		this.renderChildren = function(ctx) {
+			var x = this.attribute('x').toPixels('x');
+			var y = this.attribute('y').toPixels('y');
+
+			var width = this.attribute('width').toPixels('x');
+			var height = this.attribute('height').toPixels('y');
+			if (width == 0 || height == 0) return;
+
+			ctx.save();
+			if (isSvg) {
+				ctx.drawSvg(this.img, x, y, width, height);
+			}
+			else {
+				ctx.translate(x, y);
+				svg.AspectRatio(ctx,
+								this.attribute('preserveAspectRatio').value,
+								width,
+								this.img.width,
+								height,
+								this.img.height,
+								0,
+								0);
+				ctx.drawImage(this.img, 0, 0);
+			}
+			ctx.restore();
+		}
+
+		this.getBoundingBox = function () {
+			var x = this.attribute('x').toPixels('x');
+			var y = this.attribute('y').toPixels('y');
+
+			var width = this.attribute('width').toPixels('x');
+			var height = this.attribute('height').toPixels('y');
+
+			return new svg.BoundingBox(x, y, x + width, y + height);
+		};
+	}
+	Element.image.prototype = new RenderedElementBase;
+
+	// group element
+	Element.g = function(node) {
+		this.base = RenderedElementBase;
+		this.base(node);
+
+		this.getBoundingBox = function() {
+			var bb = new svg.BoundingBox();
+			for (var i=0; i<this.children.length; i++) {
+				bb.addBoundingBox(this.children[i].getBoundingBox());
+			}
+			return bb;
+		};
+	}
+	Element.g.prototype = new RenderedElementBase;
+
+	// symbol element
+	Element.symbol = function(node) {
+		this.base = RenderedElementBase;
+		this.base(node);
+
+		this.baseSetContext = this.setContext;
+		this.setContext = function(ctx) {
+			this.baseSetContext(ctx);
+
+			// viewbox
+			if (this.attribute('viewBox').hasValue()) {
+				var viewBox = svg.ToNumberArray(this.attribute('viewBox').value);
+				var minX = viewBox[0];
+				var minY = viewBox[1];
+				var width = viewBox[2];
+				var height = viewBox[3];
+
+				svg.AspectRatio(ctx,
+								this.attribute('preserveAspectRatio').value,
+								this.attribute('width').toPixels('x'),
+								width,
+								this.attribute('height').toPixels('y'),
+								height,
+								minX,
+								minY);
+
+				svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);
+			}
+		}
+	}
+	Element.symbol.prototype = new RenderedElementBase;
+
+	// style element
+	Element.style = function(node) {
+		this.base = ElementBase;
+		this.base(node);
+
+		// text, or spaces then CDATA
+		var css = node.childNodes[0].nodeValue + (node.childNodes.length > 1 ? node.childNodes[1].nodeValue : '');
+		css = css.replace(/(\/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)|(^[\s]*\/\/.*)/gm, ''); // remove comments
+		css = svg.compressSpaces(css); // replace whitespace
+		var cssDefs = css.split('}');
+		for (var i=0; i<cssDefs.length; i++) {
+			if (svg.trim(cssDefs[i]) != '') {
+				var cssDef = cssDefs[i].split('{');
+				var cssClasses = cssDef[0].split(',');
+				var cssProps = cssDef[1].split(';');
+				for (var j=0; j<cssClasses.length; j++) {
+					var cssClass = svg.trim(cssClasses[j]);
+					if (cssClass != '') {
+						var props = {};
+						for (var k=0; k<cssProps.length; k++) {
+							var prop = cssProps[k].indexOf(':');
+							var name = cssProps[k].substr(0, prop);
+							var value = cssProps[k].substr(prop + 1, cssProps[k].length - prop);
+							if (name != null && value != null) {
+								props[svg.trim(name)] = new svg.Property(svg.trim(name), svg.trim(value));
 							}
-							svg.Styles[cssClass] = props;
-							if (cssClass == '@font-face') {
-								var fontFamily = props['font-family'].value.replace(/"/g,'');
-								var srcs = props['src'].value.split(',');
-								for (var s=0; s<srcs.length; s++) {
-									if (srcs[s].indexOf('format("svg")') > 0) {
-										var urlStart = srcs[s].indexOf('url');
-										var urlEnd = srcs[s].indexOf(')', urlStart);
-										var url = srcs[s].substr(urlStart + 5, urlEnd - urlStart - 6);
-										var doc = svg.parseXml(svg.ajax(url));
-										var fonts = doc.getElementsByTagName('font');
-										for (var f=0; f<fonts.length; f++) {
-											var font = svg.CreateElement(fonts[f]);
-											svg.Definitions[fontFamily] = font;
-										}
+						}
+						svg.Styles[cssClass] = props;
+						if (cssClass == '@font-face') {
+							var fontFamily = props['font-family'].value.replace(/"/g,'');
+							var srcs = props['src'].value.split(',');
+							for (var s=0; s<srcs.length; s++) {
+								if (srcs[s].indexOf('format("svg")') > 0) {
+									var urlStart = srcs[s].indexOf('url');
+									var urlEnd = srcs[s].indexOf(')', urlStart);
+									var url = srcs[s].substr(urlStart + 5, urlEnd - urlStart - 6);
+									var doc = svg.parseXml(svg.ajax(url));
+									var fonts = doc.getElementsByTagName('font');
+									for (var f=0; f<fonts.length; f++) {
+										var font = svg.CreateElement(fonts[f]);
+										svg.Definitions[fontFamily] = font;
 									}
 								}
 							}
@@ -739,119 +743,120 @@ define([
 				}
 			}
 		}
-		svg.Element.style.prototype = new svg.Element.ElementBase;
+	}
+	Element.style.prototype = new ElementBase;
 
-		// use element
-		svg.Element.use = function(node) {
-			this.base = svg.Element.RenderedElementBase;
-			this.base(node);
+	// use element
+	Element.use = function(node) {
+		this.base = RenderedElementBase;
+		this.base(node);
 
-			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {
-				this.baseSetContext(ctx);
-				if (this.attribute('x').hasValue()) ctx.translate(this.attribute('x').toPixels('x'), 0);
-				if (this.attribute('y').hasValue()) ctx.translate(0, this.attribute('y').toPixels('y'));
+		this.baseSetContext = this.setContext;
+		this.setContext = function(ctx) {
+			this.baseSetContext(ctx);
+			if (this.attribute('x').hasValue()) ctx.translate(this.attribute('x').toPixels('x'), 0);
+			if (this.attribute('y').hasValue()) ctx.translate(0, this.attribute('y').toPixels('y'));
+		}
+
+		this.getDefinition = function() {
+			var element = this.attribute('xlink:href').getDefinition();
+			if (this.attribute('width').hasValue()) element.attribute('width', true).value = this.attribute('width').value;
+			if (this.attribute('height').hasValue()) element.attribute('height', true).value = this.attribute('height').value;
+			return element;
+		}
+
+		this.path = function(ctx) {
+			var element = this.getDefinition();
+			if (element != null) element.path(ctx);
+		}
+
+		this.renderChildren = function(ctx) {
+			var element = this.getDefinition();
+			if (element != null) {
+				// temporarily detach from parent and render
+				var oldParent = element.parent;
+				element.parent = null;
+				element.render(ctx);
+				element.parent = oldParent;
 			}
+		}
+	}
+	Element.use.prototype = new RenderedElementBase;
 
-			this.getDefinition = function() {
-				var element = this.attribute('xlink:href').getDefinition();
-				if (this.attribute('width').hasValue()) element.attribute('width', true).value = this.attribute('width').value;
-				if (this.attribute('height').hasValue()) element.attribute('height', true).value = this.attribute('height').value;
-				return element;
-			}
+	// mask element
+	Element.mask = function(node) {
+		this.base = ElementBase;
+		this.base(node);
 
-			this.path = function(ctx) {
-				var element = this.getDefinition();
-				if (element != null) element.path(ctx);
-			}
+		this.apply = function(ctx, element) {
+			// render as temp svg
+			var x = this.attribute('x').toPixels('x');
+			var y = this.attribute('y').toPixels('y');
+			var width = this.attribute('width').toPixels('x');
+			var height = this.attribute('height').toPixels('y');
 
-			this.renderChildren = function(ctx) {
-				var element = this.getDefinition();
-				if (element != null) {
-					// temporarily detach from parent and render
-					var oldParent = element.parent;
-					element.parent = null;
-					element.render(ctx);
-					element.parent = oldParent;
+			// temporarily remove mask to avoid recursion
+			var mask = element.attribute('mask').value;
+			element.attribute('mask').value = '';
+
+			var cMask = document.createElement('canvas');
+			cMask.width = x + width;
+			cMask.height = y + height;
+			var maskCtx = cMask.getContext('2d');
+			this.renderChildren(maskCtx);
+
+			var c = document.createElement('canvas');
+			c.width = x + width;
+			c.height = y + height;
+			var tempCtx = c.getContext('2d');
+			element.render(tempCtx);
+			tempCtx.globalCompositeOperation = 'destination-in';
+			tempCtx.fillStyle = maskCtx.createPattern(cMask, 'no-repeat');
+			tempCtx.fillRect(0, 0, x + width, y + height);
+
+			ctx.fillStyle = tempCtx.createPattern(c, 'no-repeat');
+			ctx.fillRect(0, 0, x + width, y + height);
+
+			// reassign mask
+			element.attribute('mask').value = mask;
+		}
+
+		this.render = function(ctx) {
+			// NO RENDER
+		}
+	}
+	Element.mask.prototype = new ElementBase;
+
+	// clip element
+	Element.clipPath = function(node) {
+		this.base = ElementBase;
+		this.base(node);
+
+		this.apply = function(ctx) {
+			for (var i=0; i<this.children.length; i++) {
+				if (this.children[i].path) {
+					this.children[i].path(ctx);
+					ctx.clip();
 				}
 			}
 		}
-		svg.Element.use.prototype = new svg.Element.RenderedElementBase;
 
-		// mask element
-		svg.Element.mask = function(node) {
-			this.base = svg.Element.ElementBase;
-			this.base(node);
-
-			this.apply = function(ctx, element) {
-				// render as temp svg
-				var x = this.attribute('x').toPixels('x');
-				var y = this.attribute('y').toPixels('y');
-				var width = this.attribute('width').toPixels('x');
-				var height = this.attribute('height').toPixels('y');
-
-				// temporarily remove mask to avoid recursion
-				var mask = element.attribute('mask').value;
-				element.attribute('mask').value = '';
-
-					var cMask = document.createElement('canvas');
-					cMask.width = x + width;
-					cMask.height = y + height;
-					var maskCtx = cMask.getContext('2d');
-					this.renderChildren(maskCtx);
-
-					var c = document.createElement('canvas');
-					c.width = x + width;
-					c.height = y + height;
-					var tempCtx = c.getContext('2d');
-					element.render(tempCtx);
-					tempCtx.globalCompositeOperation = 'destination-in';
-					tempCtx.fillStyle = maskCtx.createPattern(cMask, 'no-repeat');
-					tempCtx.fillRect(0, 0, x + width, y + height);
-
-					ctx.fillStyle = tempCtx.createPattern(c, 'no-repeat');
-					ctx.fillRect(0, 0, x + width, y + height);
-
-				// reassign mask
-				element.attribute('mask').value = mask;
-			}
-
-			this.render = function(ctx) {
-				// NO RENDER
-			}
+		this.render = function(ctx) {
+			// NO RENDER
 		}
-		svg.Element.mask.prototype = new svg.Element.ElementBase;
-
-		// clip element
-		svg.Element.clipPath = function(node) {
-			this.base = svg.Element.ElementBase;
-			this.base(node);
-
-			this.apply = function(ctx) {
-				for (var i=0; i<this.children.length; i++) {
-					if (this.children[i].path) {
-						this.children[i].path(ctx);
-						ctx.clip();
-					}
-				}
-			}
-
-			this.render = function(ctx) {
-				// NO RENDER
-			}
-		}
-		svg.Element.clipPath.prototype = new svg.Element.ElementBase;
+	}
+	Element.clipPath.prototype = new ElementBase;
 
 
-		// title element, do nothing
-		svg.Element.title = function(node) {
-		}
-		svg.Element.title.prototype = new svg.Element.ElementBase;
+	// title element, do nothing
+	Element.title = function(node) {
+	}
+	Element.title.prototype = new ElementBase;
 
-		// desc element, do nothing
-		svg.Element.desc = function(node) {
-		}
-		svg.Element.desc.prototype = new svg.Element.ElementBase;
+	// desc element, do nothing
+	Element.desc = function(node) {
+	}
+	Element.desc.prototype = new ElementBase;
 
 	Element.path = path;
 	Element.pattern = pattern;
